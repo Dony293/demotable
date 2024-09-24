@@ -8,7 +8,7 @@ import 'handsontable/dist/handsontable.full.min.css';
 import { GraphQLClient, gql } from 'graphql-request';
 const client = new GraphQLClient('http://localhost:3001/graphql', {
   headers: {
-    Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2YWExMzBmOWFmMzFiNGYwMzc1ZTk3NSIsImlhdCI6MTcyNjg0MjY3OSwiZXhwIjoxNzI2OTI5MDc5fQ.Vqs2QonNxav_-g4rGtHweLFQRQ7f75S4fzlIe7S9b2o`,  // Token de autenticación
+    Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2YWExMzBmOWFmMzFiNGYwMzc1ZTk3NSIsImlhdCI6MTcyNzA3NDkwOSwiZXhwIjoxNzI3MTYxMzA5fQ.8LyvDoDc8TV5Bdv7yQmqnA7mA68_S8Ruihf043t28OQ`,  // Token de autenticación
   },
 });
 
@@ -77,22 +77,14 @@ const ExampleComponent = () => {
   // }, []);
 
   // Manejar el evento de cambio
-  const afterColumnInsert = async(index, amount) => {
+  const afterColumnInsert = async (index, amount) => {
     const newHeader = { name: 'Nueva Columna', type: `custom_${index}`, key: false };
 
     // Agregar el nuevo header a la lista de columnas
     const updatedColumns = [...columns];
     updatedColumns.splice(index, 0, newHeader);
 
-    const variables = {
-      "createColumnInput": {
-        "idProspectList": "66d5c94fd93cb34c77b402bf",
-        "index": index,
-        "name": "Nueva columna 7"
-      }
-    };
-
-    const response = await client.request(CREATE_COLUMN , variables);
+    // const response = 
 
     setColumns(updatedColumns);
     // Enviar el nuevo header al servidor
@@ -100,15 +92,16 @@ const ExampleComponent = () => {
   };
 
   // Función para guardar el nuevo header en el servidor
-  const saveNewHeaderToServer = (header) => {
+  const saveNewHeaderToServer = async (header) => {
 
-    fetch('/api/save-header', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(header),
-    })
+    const variables = {
+      "createColumnInput": {
+        "idProspectList": "66d5c94fd93cb34c77b402bf",
+        "index": index,
+        "name": "Nueva columna"
+      }
+    };
+    await client.request(CREATE_COLUMN, variables)
       .then(response => response.json())
       .then(data => {
         console.log('Header guardado:', data);
@@ -144,13 +137,13 @@ const ExampleComponent = () => {
 
       const response = await client.request(LOAD_DATA_QUERY, variables);
       console.log(response.prospectList.fields);
-      console.log(response.prospectList.rows);
+      console.log(response.prospectList.rows.rowData);
       // const { rows } = response.tableData;
       // const rows = response.fields;
       // hotRef.current.loadData(rows);
       // setTableData(rows);
       const columnas = response.prospectList.fields;
-      const rows = response.prospectList.rows;
+      const rows = response.prospectList.rows.rowData;
       // hot
       setColumns(columnas);
       const hot = hotTableRef.current.hotInstance;
@@ -171,7 +164,9 @@ const ExampleComponent = () => {
       console.log(currentData);
       const variables = {
         "updateRowData": {
-          "data": currentData,
+          "data": {
+            "rowData": currentData
+          },
           "idProspectList": "66d5c94fd93cb34c77b402bf"
         }
       };
@@ -183,7 +178,7 @@ const ExampleComponent = () => {
       console.error('Error loading data:', error);
     };
 
-    
+
 
     // const hot = hotTableRef.current.hotInstance;
     // const currentData = hot.getData(); // Obtener los datos actuales de la tabla
@@ -227,20 +222,30 @@ const ExampleComponent = () => {
         height="auto"
         width="auto"
         licenseKey="non-commercial-and-evaluation"
+        afterChange={(change, source) => {
+          if (!change) {
+            return;
+          }
+
+          if (!isAutosave) {
+            return;
+          }
+          console.log("Change: " + JSON.stringify(change));
+        }}
       />
       <div className="controls">
         <button onClick={loadTableData}>Cargar datos</button>
         <button onClick={saveTableData}>Guardar datos</button>
         <label>
-            <input
-              type="checkbox"
-              name="autosave"
-              id="autosave"
-              checked={isAutosave}
-              onClick={autosaveClickCallback}
-            />
-            Autosave
-          </label>
+          <input
+            type="checkbox"
+            name="autosave"
+            id="autosave"
+            checked={isAutosave}
+            onClick={autosaveClickCallback}
+          />
+          Autosave
+        </label>
       </div>
     </>
   );
