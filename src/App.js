@@ -88,11 +88,11 @@ const ExampleComponent = () => {
 
     setColumns(updatedColumns);
     // Enviar el nuevo header al servidor
-    saveNewHeaderToServer(newHeader);
+    saveNewHeaderToServer(newHeader,index);
   };
 
   // Función para guardar el nuevo header en el servidor
-  const saveNewHeaderToServer = async (header) => {
+  const saveNewHeaderToServer = async (header,index) => {
 
     const variables = {
       "createColumnInput": {
